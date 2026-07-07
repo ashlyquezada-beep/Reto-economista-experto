@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍋 Reto: ¡Economista Experto!</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg,#2b1055 0%,#7597de 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start;
+    padding:16px 10px; color:#fff;
+  }
+  .container { width:100%; max-width:560px; }
+  .card {
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:20px; padding:22px; backdrop-filter:blur(10px);
+    box-shadow:0 10px 40px rgba(0,0,0,0.4);
+  }
+  h1 { font-size:1.6em; margin-bottom:6px; color:#ffe45c; text-align:center; }
+  h2 { font-size:1.15em; color:#ffe45c; margin-bottom:8px; }
+  p  { line-height:1.5; font-size:0.94em; margin-bottom:10px; }
+  .subtitle { text-align:center; color:#cdd7ff; font-size:0.9em; margin-bottom:16px; }
+  .hidden { display:none !important; }
+
+  .btn {
+    display:block; width:100%; border:none; border-radius:14px;
+    background:linear-gradient(90deg,#ffe45c,#ffb52e); color:#2b1055;
+    font-weight:800; font-size:1.1em; padding:15px; margin-top:14px;
+    cursor:pointer; transition:transform .12s, box-shadow .12s;
+  }
+  .btn:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(255,180,46,.45); }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+
+  input[type=text] {
+    width:100%; padding:13px; border-radius:12px; border:2px solid rgba(255,255,255,.3);
+    background:rgba(0,0,0,.25); color:#fff; font-size:1.05em; text-align:center; outline:none;
+  }
+  input[type=text]:focus { border-color:#ffe45c; }
+
+  .rules li { margin-bottom:7px; line-height:1.45; font-size:0.9em; }
+  .rules { padding-left:20px; margin-bottom:6px; }
+  .tag { background:rgba(255,228,92,.2); color:#ffe45c; border-radius:6px; padding:1px 8px; font-weight:700; font-size:.85em; }
+
+  /* HUD */
+  .hud { display:flex; gap:8px; margin-bottom:12px; }
+  .hud-item { flex:1; background:rgba(0,0,0,.3); border-radius:12px; padding:8px 4px; text-align:center; border:1px solid rgba(255,255,255,.15); }
+  .hud-item .l { font-size:.65em; text-transform:uppercase; letter-spacing:1px; color:#aab8e8; }
+  .hud-item .v { font-size:1.2em; font-weight:800; margin-top:1px; }
+  #hud-score { color:#7dff9b; }
+  #hud-streak { color:#ff9d5c; }
+
+  .round-banner { text-align:center; margin-bottom:10px; }
+  .round-banner .rb-title { font-size:1.05em; font-weight:800; color:#ffe45c; }
+  .round-banner .rb-sub { font-size:.8em; color:#cdd7ff; }
+
+  /* Timer bar */
+  .tbar-wrap { background:rgba(0,0,0,.35); border-radius:8px; height:12px; overflow:hidden; margin-bottom:14px; }
+  .tbar { height:100%; width:100%; background:linear-gradient(90deg,#7dff9b,#ffe45c,#ff5c5c); border-radius:8px; }
+
+  /* Rush */
+  .rush-item {
+    background:rgba(0,0,0,.3); border:2px solid rgba(255,255,255,.25); border-radius:16px;
+    padding:26px 18px; text-align:center; font-size:1.15em; font-weight:700;
+    min-height:120px; display:flex; align-items:center; justify-content:center;
+    margin-bottom:14px; animation:pop .25s ease;
+  }
+  @keyframes pop { from { transform:scale(.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .rush-btns { display:flex; gap:10px; }
+  .rush-btn {
+    flex:1; border:none; border-radius:14px; padding:18px 8px; font-size:1em; font-weight:800;
+    cursor:pointer; color:#fff; transition:transform .1s;
+  }
+  .rush-btn:active { transform:scale(.96); }
+  .rush-ok  { background:linear-gradient(135deg,#1fa356,#2ecc71); }
+  .rush-bad { background:linear-gradient(135deg,#b33939,#e55039); }
+
+  /* Trivia */
+  .q-text {
+    background:rgba(0,0,0,.3); border-radius:16px; padding:18px; font-size:1.02em;
+    font-weight:700; margin-bottom:14px; line-height:1.45; animation:pop .25s ease;
+  }
+  .opt {
+    display:block; width:100%; text-align:left; border:2px solid rgba(255,255,255,.2);
+    background:rgba(255,255,255,.08); color:#fff; border-radius:12px;
+    padding:13px 14px; margin-bottom:9px; font-size:.93em; cursor:pointer; transition:background .12s;
+  }
+  .opt:hover:not(:disabled) { background:rgba(255,228,92,.18); }
+  .opt.correct { background:rgba(46,204,113,.35); border-color:#2ecc71; }
+  .opt.wrong   { background:rgba(229,80,57,.35);  border-color:#e55039; }
+  .opt:disabled { cursor:default; }
+
+  .feedback { text-align:center; font-weight:800; font-size:1.05em; min-height:28px; margin-bottom:6px; }
+  .fb-good { color:#7dff9b; } .fb-bad { color:#ff8b8b; }
+
+  /* Interstitial */
+  .inter { text-align:center; padding:10px 0; }
+  .inter .big { font-size:2.6em; margin-bottom:8px; }
+
+  /* Final */
+  .final-card {
+    background:rgba(0,0,0,.35); border:2px dashed rgba(255,228,92,.6); border-radius:18px;
+    padding:20px; text-align:center; margin:12px 0;
+  }
+  .final-name { font-size:1.3em; font-weight:800; color:#fff; }
+  .final-level { font-size:1.35em; font-weight:900; color:#ffe45c; margin:10px 0; line-height:1.3; }
+  .final-score { font-size:2.4em; font-weight:900; color:#7dff9b; }
+  .final-detail { font-size:.85em; color:#cdd7ff; margin-top:8px; }
+  .medal { font-size:3em; }
+  .capture-note { text-align:center; font-size:.85em; color:#ffe45c; background:rgba(255,228,92,.12); border-radius:10px; padding:10px; margin-top:6px; }
+  footer { text-align:center; margin-top:14px; font-size:.72em; color:#aab8e8; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ============ INICIO ============ -->
+<div id="s-intro" class="card">
+  <h1>🍋 RETO: ¡ECONOMISTA EXPERTO!</h1>
+  <div class="subtitle">Reputación, estandarización y el mercado de los cacharros</div>
+  <p style="text-align:center;"><b>4 rondas · velocidad + conocimiento · solo los mejores ganan</b></p>
+  <ul class="rules">
+    <li>⚡ <b>Rondas 1 y 3 — LIMÓN RUSH:</b> aparecen situaciones y decides rapidísimo: ¿<span class="tag">✅ CONFÍO</span> (hay señal de calidad) o <span class="tag">🍋 CACHARRO</span> (riesgo)? Aciertos seguidos multiplican tus puntos (hasta <b>x4</b>). Errar o tardarte te <b>resta</b> puntos.</li>
+    <li>🧠 <b>Rondas 2 y 4 — TRIVIA CONTRARRELOJ:</b> responder bien da hasta <b>100 pts</b>... pero mientras más te demoras, menos ganas. Errar resta <b>30</b>.</li>
+    <li>🏆 Tu puntaje final define tu nivel. <b>Solo con casi todo perfecto llegas a ECONOMISTA EXPERTO.</b></li>
+  </ul>
+  <input type="text" id="player-name" placeholder="Escribe tu nombre 👤" maxlength="25">
+  <button class="btn" onclick="startGame()">🚀 ¡EMPEZAR EL RETO!</button>
+</div>
+
+<!-- ============ JUEGO ============ -->
+<div id="s-game" class="card hidden">
+  <div class="hud">
+    <div class="hud-item"><div class="l">Ronda</div><div class="v" id="hud-round">1/4</div></div>
+    <div class="hud-item"><div class="l">Puntos</div><div class="v" id="hud-score">0</div></div>
+    <div class="hud-item"><div class="l">Racha</div><div class="v" id="hud-streak">–</div></div>
+  </div>
+  <div class="round-banner"><div class="rb-title" id="rb-title"></div><div class="rb-sub" id="rb-sub"></div></div>
+  <div class="tbar-wrap"><div class="tbar" id="tbar"></div></div>
+  <div class="feedback" id="feedback"></div>
+
+  <div id="rush-area" class="hidden">
+    <div class="rush-item" id="rush-item"></div>
+    <div class="rush-btns">
+      <button class="rush-btn rush-ok" onclick="rushAnswer(true)">✅ CONFÍO<br><small>hay señal de calidad</small></button>
+      <button class="rush-btn rush-bad" onclick="rushAnswer(false)">🍋 CACHARRO<br><small>riesgo, sin señales</small></button>
+    </div>
+  </div>
+
+  <div id="trivia-area" class="hidden">
+    <div class="q-text" id="q-text"></div>
+    <div id="q-opts"></div>
+  </div>
+</div>
+
+<!-- ============ INTERMEDIO ============ -->
+<div id="s-inter" class="card hidden">
+  <div class="inter">
+    <div class="big" id="inter-emoji">⚡</div>
+    <h2 id="inter-title"></h2>
+    <p id="inter-text"></p>
+    <button class="btn" onclick="nextRound()">▶️ ¡VAMOS!</button>
+  </div>
+</div>
+
+<!-- ============ FINAL ============ -->
+<div id="s-end" class="card hidden">
+  <h1 style="font-size:1.3em;">🏁 RESULTADO FINAL</h1>
+  <div class="final-card">
+    <div class="medal" id="end-medal">🏆</div>
+    <div class="final-name" id="end-name"></div>
+    <div class="final-level" id="end-level"></div>
+    <div class="final-score" id="end-score"></div>
+    <div class="final-detail" id="end-detail"></div>
+  </div>
+  <div class="capture-note">📸 ¡Captura esta pantalla y envíala para reclamar tu premio!</div>
+  <button class="btn" onclick="location.reload()">🔄 Intentar de nuevo</button>
+</div>
+
+<footer>Basado en Pindyck &amp; Rubinfeld, <i>Microeconomía</i>, cap. 17 · La importancia de la reputación y la estandarización</footer>
+</div>
+
+<script>
+/* =================== DATOS =================== */
+// true = hay señal de calidad (CONFÍO) · false = riesgo de cacharro
+const RUSH_POOL = [
+  { t:'🏪 Tienda con fama de reparar y aceptar devoluciones', ok:true,  why:'Reputación = señal de calidad' },
+  { t:'🍔 McDonald’s en plena autopista', ok:true,  why:'Estandarización: sabes qué recibirás' },
+  { t:'🪙 Vendedor de monedas raras SIN certificado', ok:false, why:'Él sabe si es falsa; tú no' },
+  { t:'🏠 Techador recomendado por todos tus vecinos', ok:true,  why:'Reputación en el barrio' },
+  { t:'🍽️ Restaurante desconocido de carretera', ok:false, why:'Sin reputación ni estándar: riesgo' },
+  { t:'📜 Producto con garantía de devolución total', ok:true,  why:'La garantía es señal creíble' },
+  { t:'🔧 Fontanero sin referencias que cobra baratísimo', ok:false, why:'Precio bajo sin señales = sospecha' },
+  { t:'🖼️ Cuadro "original" vendido sin documentos', ok:false, why:'Información asimétrica pura' },
+  { t:'🏨 Cadena hotelera igual en todo el país', ok:true,  why:'Estandarización para viajeros' },
+  { t:'🚗 Auto usado "como nuevo" sin historial', ok:false, why:'Posible limón 🍋' },
+  { t:'⚾ Jugador que SU PROPIO equipo quiere renovar', ok:true,  why:'Su equipo lo conoce y lo retiene' },
+  { t:'⚾ Jugador libre que su equipo dejó ir sin pelear', ok:false, why:'Su equipo lo conoce mejor... y lo soltó' },
+  { t:'🏪 Motel de autopista sin marca ni cadena', ok:false, why:'Clientes de una sola vez, sin señales' },
+  { t:'🍽️ Restaurante famoso por ingredientes frescos', ok:true,  why:'Reputación: nadie ha enfermado ahí' },
+  { t:'📮 Sello "rarísimo" por internet, sin verificación', ok:false, why:'El vendedor sabe más que tú' },
+  { t:'🏷️ Franquicia con el mismo menú en todo el país', ok:true,  why:'Producto estandarizado' },
+  { t:'🍽️ Joe’s Diner: quizá cocina mejor... pero nadie lo conoce', ok:false, why:'Sin señal de calidad, es riesgo' },
+  { t:'🔌 Electricista con años de buena fama en tu ciudad', ok:true,  why:'Reputación construida con clientes repetidos' },
+  { t:'🚗 Concesionario que ofrece revisión mecánica gratis', ok:true,  why:'Permite verificar la calidad: reduce la asimetría' },
+  { t:'👟 Zapatillas "de marca" a mitad de precio en la calle', ok:false, why:'Probable falsificación' },
+];
+
+const TRIVIA_R2 = [
+  { q:'¿Qué es la información asimétrica?',
+    opts:['Compradores y vendedores tienen la misma información','Una parte de la transacción conoce la calidad mejor que la otra','Los precios suben cuando sube la demanda','El gobierno oculta información del mercado'], c:1 },
+  { q:'Si los vendedores de buena calidad NO pueden demostrarla, ¿qué ocurre en el mercado?',
+    opts:['Los precios suben para todos','Los bienes de mala calidad expulsan a los de buena calidad','Se vende más cantidad','Los compradores obtienen mejores productos'], c:1 },
+  { q:'¿Por qué McDonald’s resulta atractivo cuando viajas por una autopista?',
+    opts:['Porque su comida es la mejor de la zona','Porque es el más barato','Porque ofrece un producto estandarizado: sabes exactamente qué vas a recibir','Porque tiene la mejor ubicación'], c:2 },
+  { q:'¿En qué caso es casi IMPOSIBLE que un negocio se haga una reputación?',
+    opts:['Cuando sus clientes solo compran una vez (moteles y cafeterías de autopista)','Cuando vende productos caros','Cuando tiene mucha competencia','Cuando es un negocio nuevo en la ciudad'], c:0 },
+  { q:'En el mercado de sellos, monedas y cuadros raros, ¿quién conoce mejor la autenticidad?',
+    opts:['El comprador','Un tasador del gobierno','Ambos por igual','El vendedor'], c:3 },
+];
+
+const TRIVIA_R4 = [
+  { q:'🍋 Si los compradores NO pueden distinguir la calidad, ¿qué precio están dispuestos a pagar?',
+    opts:['El precio del producto de mejor calidad','Solo el valor promedio esperado, aunque el producto sea bueno','El precio que fije el vendedor','El precio más bajo del mercado siempre'], c:1 },
+  { q:'📜 ¿Por qué una garantía es una señal CREÍBLE de calidad?',
+    opts:['Porque la exige la ley','Porque hace el producto más caro','Porque a un vendedor de cacharros le saldría carísimo ofrecerla: tendría que pagar todas las reparaciones','Porque los compradores siempre leen los contratos'], c:2 },
+  { q:'⚾ ¿Por qué los jugadores libres del béisbol son como los "cacharros" del mercado de autos usados?',
+    opts:['Porque son los más viejos de la liga','Porque cobran salarios más altos','Porque entrenan menos que los novatos','Porque su equipo original, que los conoce mejor que nadie, decidió dejarlos ir'], c:3 },
+  { q:'🔑 ¿Cuál es la diferencia CLAVE entre reputación y estandarización como soluciones?',
+    opts:['La reputación necesita clientes que repiten; la estandarización funciona con clientes de una sola vez','La estandarización es ilegal en algunos países','La reputación es gratis y la estandarización no','No hay diferencia, son lo mismo'], c:0 },
+  { q:'🛣️ Un restaurante de autopista NO puede resolver su problema con reputación porque...',
+    opts:['Su comida siempre es de mala calidad','La reputación cuesta demasiado dinero','Sus clientes pasan una sola vez: no hay compras repetidas para construir fama','Está prohibido hacer publicidad en autopistas'], c:2 },
+];
+
+/* =================== CONFIG =================== */
+const ROUNDS = [
+  { type:'rush',   items:10, itemTime:6, title:'⚡ RONDA 1: LIMÓN RUSH',        sub:'¿Confías o es cacharro? ¡Rápido!' },
+  { type:'trivia', data:TRIVIA_R2, qTime:14, title:'🧠 RONDA 2: TRIVIA',          sub:'Responde rápido: el tiempo vale puntos' },
+  { type:'rush',   items:10, itemTime:4, title:'⚡ RONDA 3: RUSH TURBO',        sub:'¡Ahora más rápido!' },
+  { type:'trivia', data:TRIVIA_R4, qTime:11, title:'🔥 RONDA 4: NIVEL EXPERTO',   sub:'Aplica la teoría como un profesional' },
+];
+// Máximo teórico ≈ 600 (rush) + 1000 (trivia) = 1600
+const LEVELS = [
+  { min:1100, medal:'🏆', name:'¡¡ECONOMISTA EXPERTOO!!' },
+  { min:750,  medal:'🥈', name:'Amigo, vas por buen camino 👏' },
+  { min:400,  medal:'🥉', name:'Casi, pero ajam... para la otra mejor 🙃' },
+  { min:-Infinity, medal:'🎨', name:'Estemmm... ¿y pintar no te gusta? 😬' },
+];
+
+/* =================== ESTADO =================== */
+let S = {};
+let timerId = null;
+
+function $(id){ return document.getElementById(id); }
+function show(id){ $(id).classList.remove('hidden'); }
+function hide(id){ $(id).classList.add('hidden'); }
+function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; } return b; }
+
+function startGame(){
+  const name = $('player-name').value.trim();
+  if(!name){ $('player-name').style.borderColor='#ff5c5c'; $('player-name').placeholder='⚠️ ¡Escribe tu nombre primero!'; return; }
+  const pool = shuffle(RUSH_POOL);
+  S = { name, score:0, round:0, streak:0, mult:1,
+        rushPools:[ pool.slice(0,10), pool.slice(10,20) ],
+        rushUsed:0, correctCount:0, totalCount:0 };
+  hide('s-intro');
+  interstitial();
+}
+
+function interstitial(){
+  const r = ROUNDS[S.round];
+  hide('s-game');
+  show('s-inter');
+  $('inter-emoji').textContent = r.type==='rush' ? '⚡🍋' : '🧠⏱️';
+  $('inter-title').textContent = r.title;
+  $('inter-text').textContent = r.type==='rush'
+    ? 'Clasifica cada situación: ✅ CONFÍO si hay señal de calidad (reputación, estandarización, garantía) o 🍋 CACHARRO si hay riesgo. Rachas de 3 suben tu multiplicador. ¡Tarde o mal = puntos perdidos!'
+    : 'Responde cada pregunta antes de que se acabe la barra. Mientras más rápido, más puntos (hasta 100). Error: −30. Sin responder: −20.';
+}
+
+function nextRound(){
+  hide('s-inter'); show('s-game');
+  const r = ROUNDS[S.round];
+  $('hud-round').textContent = (S.round+1)+'/4';
+  $('rb-title').textContent = r.title;
+  $('rb-sub').textContent = r.sub;
+  $('feedback').textContent='';
+  S.streak=0; S.mult=1; updateHUD();
+  if(r.type==='rush'){ S.rushIdx=0; S.rushList=S.rushPools[S.round===0?0:1]; showRushItem(); }
+  else { S.qIdx=0; showQuestion(); }
+}
+
+function updateHUD(){
+  $('hud-score').textContent = S.score;
+  $('hud-streak').textContent = S.streak>0 ? '🔥'+S.streak+' (x'+S.mult+')' : '–';
+}
+
+/* =================== TIMER BAR =================== */
+function runTimer(seconds, onTimeout){
+  clearInterval(timerId);
+  const bar = $('tbar');
+  const start = Date.now();
+  bar.style.width='100%';
+  timerId = setInterval(()=>{
+    const left = 1 - (Date.now()-start)/(seconds*1000);
+    bar.style.width = Math.max(0,left*100)+'%';
+    if(left<=0){ clearInterval(timerId); onTimeout(); }
+  }, 50);
+}
+
+/* =================== RUSH =================== */
+function showRushItem(){
+  const r = ROUNDS[S.round];
+  if(S.rushIdx >= r.items){ return endRound(); }
+  show('rush-area'); hide('trivia-area');
+  const item = S.rushList[S.rushIdx];
+  $('rush-item').textContent = item.t;
+  S.answered=false;
+  runTimer(r.itemTime, ()=>{ if(!S.answered) rushResult(null, item); });
+}
+
+function rushAnswer(choice){
+  if(S.answered) return;
+  clearInterval(timerId);
+  rushResult(choice, S.rushList[S.rushIdx]);
+}
+
+function rushResult(choice, item){
+  S.answered=true; S.totalCount++;
+  const fb=$('feedback');
+  if(choice===item.ok){
+    S.streak++; S.correctCount++;
+    if(S.streak%3===0 && S.mult<4) S.mult++;
+    const pts = 10*S.mult;
+    S.score += pts;
+    fb.textContent = '✅ +'+pts+' · '+item.why;
+    fb.className='feedback fb-good';
+  } else {
+    const pen = choice===null ? 10 : 15;
+    S.score -= pen; S.streak=0; S.mult=1;
+    fb.textContent = (choice===null?'⏰ ¡Tarde!':'❌ ¡Error!')+' −'+pen+' · '+item.why;
+    fb.className='feedback fb-bad';
+  }
+  updateHUD();
+  S.rushIdx++;
+  setTimeout(showRushItem, 900);
+}
+
+/* =================== TRIVIA =================== */
+function showQuestion(){
+  const r = ROUNDS[S.round];
+  if(S.qIdx >= r.data.length){ return endRound(); }
+  hide('rush-area'); show('trivia-area');
+  const q = r.data[S.qIdx];
+  $('q-text').textContent = (S.qIdx+1)+'/'+r.data.length+' · '+q.q;
+  const box = $('q-opts'); box.innerHTML='';
+  S.qStart = Date.now(); S.answered=false;
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.className='opt'; b.textContent=o;
+    b.onclick=()=>answerQuestion(i,q,b);
+    box.appendChild(b);
+  });
+  runTimer(r.qTime, ()=>{ if(!S.answered) answerQuestion(-1,q,null); });
+}
+
+function answerQuestion(i,q,btn){
+  if(S.answered) return;
+  S.answered=true; S.totalCount++;
+  clearInterval(timerId);
+  const r = ROUNDS[S.round];
+  const opts=[...$('q-opts').children];
+  opts.forEach(b=>b.disabled=true);
+  opts[q.c].classList.add('correct');
+  const fb=$('feedback');
+  if(i===q.c){
+    S.correctCount++;
+    const elapsed=(Date.now()-S.qStart)/1000;
+    const bonus=Math.round(50*Math.max(0,1-elapsed/r.qTime));
+    const pts=50+bonus;
+    S.score+=pts;
+    fb.textContent='✅ ¡Correcto! +'+pts+' pts ('+bonus+' de bonus por velocidad)';
+    fb.className='feedback fb-good';
+  } else if(i===-1){
+    S.score-=20;
+    fb.textContent='⏰ ¡Se acabó el tiempo! −20 pts';
+    fb.className='feedback fb-bad';
+  } else {
+    S.score-=30;
+    if(btn) btn.classList.add('wrong');
+    fb.textContent='❌ Incorrecto −30 pts';
+    fb.className='feedback fb-bad';
+  }
+  updateHUD();
+  S.qIdx++;
+  setTimeout(showQuestion, 1600);
+}
+
+/* =================== FIN DE RONDA / JUEGO =================== */
+function endRound(){
+  clearInterval(timerId);
+  S.round++;
+  if(S.round >= ROUNDS.length) return endGame();
+  interstitial();
+}
+
+function endGame(){
+  hide('s-game'); hide('s-inter'); show('s-end');
+  const lvl = LEVELS.find(l=>S.score>=l.min);
+  $('end-medal').textContent=lvl.medal;
+  $('end-name').textContent='👤 '+S.name;
+  $('end-level').textContent=lvl.name;
+  $('end-score').textContent=S.score+' pts';
+  $('end-detail').textContent='Aciertos: '+S.correctCount+' de '+S.totalCount+' · Reto: Reputación y Estandarización';
+}
+</script>
+</body>
+</html>
